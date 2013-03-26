@@ -25,3 +25,11 @@ The repo clone string is copied to your clipboard, looks like:
 * [Workflows Class](https://github.com/jdfwarrior/Workflows)
 * [Beanstalk API Wrapper](https://github.com/chrisbarr/Beanstalk-PHP-API)
 * [Kalexiko's Beanstalk Account!](http://kalexiko.com)
+
+### Plans
+* * *
+* Global latest commit
+* Commit log per repo
+* View + Create SSH Keys
+* Deploy changes
+* Re-deploy all files (maybe)
