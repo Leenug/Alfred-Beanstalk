@@ -33,12 +33,24 @@ class Beanstalk {
 			}
 		}
 
-		if(!$repos = $this->workflow->read('repos.json')) {
+		if(!$cache = $this->workflow->read('repos.json')) {
 			$repos = $this->api->find_all_repositories(1, 1000);
-			$this->workflow->write(json_encode($repos), 'repos.json');
+
+			$cache = array();
+			foreach($repos as $r) {
+				$cache[$r->repository->id] = array(
+					'title' => $r->repository->title,
+					'name' => $r->repository->name,
+					'color_label' => $r->repository->color_label,
+					'type' => $r->repository->type,
+					'repository_url' => $r->repository->repository_url
+				);
+			}
+
+			$this->workflow->write(json_encode($cache), 'repos.json');
 		}
 
-		return $repos;
+		return $cache;
 	}
 
 	function empty_cache() {
@@ -62,6 +74,10 @@ class Beanstalk {
 				self::repo_search($args);
 			break;
 
+			case 'log':
+				self::changeset($args);
+			break;
+
 			case 'create':
 				self::repo_create($args);
 			break;
@@ -74,13 +90,14 @@ class Beanstalk {
 
 	function repo_list() {
 
-		foreach($this->repos as $repo) {
+		foreach($this->repos as $id=>$repo) {
+
 			$this->workflow->result(
-				$repo->repository->id, 
-				'git clone ' . $repo->repository->repository_url . ' -o Beanstalk', 
-				$repo->repository->name, 
-				$repo->repository->repository_url, 
-				$repo->repository->color_label.'.png'
+				$id, 
+				'git clone ' . $repo->repository_url . ' -o Beanstalk', 
+				$repo->name, 
+				$repo->repository_url, 
+				$repo->color_label .'.png'
 			);
 		}
 	
@@ -92,18 +109,18 @@ class Beanstalk {
 		$search_phrase = $args[1];
 
 		$found = 0;
-		foreach($this->repos as $repo) {
+		foreach($this->repos as $id=>$repo) {
 
-			$pos = strpos(strtolower($repo->repository->name), strtolower($search_phrase));
+			$pos = strpos(strtolower($repo->name), strtolower($search_phrase));
 
 			if($pos !== false) {
 				$this->workflow->result(
-					$repo->repository->id, 
-					'git clone ' . $repo->repository->repository_url . ' -o Beanstalk', 
-					$repo->repository->name, 
-					$repo->repository->repository_url, 
-					$repo->repository->color_label.'.png'
-				);	
+					$id, 
+					'git clone ' . $repo->repository_url . ' -o Beanstalk', 
+					$repo->name, 
+					$repo->repository_url, 
+					$repo->color_label .'.png'
+				);
 				$found++;		
 			}
 		}
@@ -121,4 +138,64 @@ class Beanstalk {
 
 		echo $this->workflow->toxml();
 	}
+
+	function changeset() {
+
+		$changes = $this->api->find_all_changesets();		
+		
+		foreach($changes as $change) {
+
+			$repo = $this->repos->{$change->revision_cache->repository_id};
+
+
+			if($repo->type == 'SubversionRepository') {
+				
+				$this->workflow->result(
+					$change->revision_cache->id, 
+					$change->revision_cache->revision, 
+					$repo->name .': ' . $change->revision_cache->message ?: 'No Message :(', 
+					'Rev#' . $change->revision_cache->revision . ' - ' . $change->revision_cache->author .' - '. self::ago($change->revision_cache->time),
+					'icon.png'
+				);
+
+			} else {
+
+				$this->workflow->result(
+					$change->revision_cache->id, 
+					$change->revision_cache->hash_id, 
+					$repo->name .': ' . $change->revision_cache->message ?: 'No Message :(', 
+					substr($change->revision_cache->hash_id, -8) . ' - ' . $change->revision_cache->author .' - '. self::ago($change->revision_cache->time),
+					'icon.png'
+				);
+
+			}
+		}
+
+
+		echo $this->workflow->toxml();
+	}
+
+	private function ago($time)
+	{
+	   $periods = array("second", "minute", "hour", "day", "week", "month", "year", "decade");
+	   $lengths = array("60","60","24","7","4.35","12","10");
+
+	   $now = time();
+
+	       $difference     = $now - strtotime($time);
+	       $tense         = "ago";
+
+	   for($j = 0; $difference >= $lengths[$j] && $j < count($lengths)-1; $j++) {
+	       $difference /= $lengths[$j];
+	   }
+
+	   $difference = round($difference);
+
+	   if($difference != 1) {
+	       $periods[$j].= "s";
+	   }
+
+	   return "$difference $periods[$j] ago ";
+	}
+
 }

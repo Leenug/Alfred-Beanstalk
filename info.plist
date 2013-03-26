@@ -50,7 +50,7 @@
 				<key>sticky</key>
 				<false/>
 				<key>text</key>
-				<string>Repo clone string has been copied to your clipboard.</string>
+				<string>Your data has been copied to your clipboard.</string>
 				<key>title</key>
 				<string>Beanstalk</string>
 			</dict>
