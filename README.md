@@ -12,11 +12,11 @@ Couldn't be simpler, just put your **account**, **username** and **password** in
 
 ### Usage
 * * *
-* `bs list` - lists all repos
-* `bs Search` {query} - searches for repos containing {query}
+* `bs list` - lists all repos, selected item copies clone string is copied to your clipboard.
+* `bs Search` {query} - searches for repos containing {query}, selected item copies clone string is copied to your clipboard.
+* `bs log` - shows latest 15 commits account wide, selected item copies commit # or revision number to your clipboard.
 
-The repo clone string is copied to your clipboard, looks like:
-
+The repo clone string, looks like:
 `git clone git@account.beanstalkapp.com:/repo.git -o Beanstalk`
 
 
@@ -28,7 +28,6 @@ The repo clone string is copied to your clipboard, looks like:
 
 ### Plans
 * * *
-* Global latest commit
 * Commit log per repo
 * View + Create SSH Keys
 * Deploy changes
